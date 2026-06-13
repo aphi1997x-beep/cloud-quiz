@@ -1652,6 +1652,7 @@
         </div>
         <button id="mode-toggle" class="mode-toggle"><span id="mode-icon">👆</span><span
                 id="mode-label">นิ้วชี้</span></button>
+        <button id="camera-switch" class="mode-toggle" style="top:120px;" title="สลับกล้อง">🔄<span style="font-size:11px;margin-left:4px;">กล้อง</span></button>
         <div id="hand-loading" class="hand-loading hidden">
             <div class="loading-spinner"></div><span>กำลังโหลด AI ตรวจจับนิ้ว...</span>
         </div>
@@ -1708,6 +1709,7 @@
             let handTrackingReady = false;
             let handTrackingActive = false;
             let frameLoopId = null;
+            let currentFacingMode = 'environment';
             let lastFingerPos = null;
             let smoothPos = { x: 0, y: 0 };
             const DWELL_TIME = 1500;
@@ -1982,7 +1984,7 @@
 
             async function initCamera() {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
                     cameraFeed.srcObject = stream; cameraFeed.style.display = '';
                     await cameraFeed.play(); cameraFallback.classList.add('hidden');
                 } catch {
@@ -2163,6 +2165,12 @@
                 });
             }
 
+            document.getElementById('camera-switch').addEventListener('click', async () => {
+                    currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+                    document.getElementById('camera-switch').innerHTML = currentFacingMode === 'user' ? '🤳<span style="font-size:11px;margin-left:4px;">กล้อง</span>' : '🔄<span style="font-size:11px;margin-left:4px;">กล้อง</span>';
+                    stopCamera();
+                    await initCamera();
+                });
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
             else init();
         })();

@@ -257,7 +257,220 @@ body {
     border-color: rgba(16, 185, 129, 0.3);
 }
 
-.btn-emoji {
+/* ===== LESSON SELECT SCREEN ===== */
+.lesson-select-screen {
+    background: linear-gradient(160deg, #0a0a2e 0%, #1a1050 35%, #2d1b69 65%, #0f172a 100%);
+    overflow: hidden;
+    z-index: 80;
+}
+
+.lesson-select-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    padding-top: max(12px, var(--safe-top));
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--glass-border);
+    flex-shrink: 0;
+    z-index: 2;
+    position: relative;
+}
+
+.lesson-select-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 16px;
+    padding-bottom: max(20px, var(--safe-bottom));
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    z-index: 2;
+}
+
+.lesson-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.lesson-card {
+    background: var(--bg-card);
+    border: 1.5px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 22px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.lesson-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(6, 182, 212, 0.05));
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.lesson-card:active {
+    transform: scale(0.97);
+}
+
+.lesson-card:active::before {
+    opacity: 1;
+}
+
+.lesson-card-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.lesson-card-emoji {
+    font-size: 40px;
+    flex-shrink: 0;
+}
+
+.lesson-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.lesson-card-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+.lesson-card-count {
+    font-size: 14px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.lesson-card-arrow {
+    font-size: 22px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+    transition: transform 0.2s;
+}
+
+.lesson-card:active .lesson-card-arrow {
+    transform: translateX(4px);
+}
+
+.lesson-empty {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-dim);
+}
+
+.lesson-empty-icon {
+    font-size: 56px;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.lesson-empty-text {
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.lesson-empty-hint {
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+/* ===== LESSON SELECTOR BAR (Teacher) ===== */
+.lesson-selector-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(20, 18, 55, 0.6);
+    border-bottom: 1px solid var(--glass-border);
+    flex-shrink: 0;
+}
+
+.lesson-dropdown {
+    flex: 1;
+    padding: 10px 14px;
+    font-family: var(--font-th);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--glass);
+    border: 1.5px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a78bfa' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+}
+
+.lesson-dropdown option {
+    background: #1a1445;
+    color: var(--text);
+}
+
+.btn-new-lesson {
+    font-family: var(--font-th);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--green-light);
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 20px;
+    padding: 8px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.btn-new-lesson:active {
+    background: rgba(16, 185, 129, 0.25);
+    transform: scale(0.95);
+}
+
+.btn-rename-lesson,
+.btn-delete-lesson {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.btn-rename-lesson:active,
+.btn-delete-lesson:active {
+    transform: scale(0.9);
+}
+
+.btn-delete-lesson:active {
+    background: rgba(244, 63, 94, 0.15);
+}
+
+/* ===== TEACHER SCREEN ===== */
     font-size: 32px;
     flex-shrink: 0;
     position: relative;

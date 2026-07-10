@@ -3,21 +3,57 @@
     'use strict';
 
     // ===================== STORAGE =====================
-    const STORAGE_KEY = 'cloudquiz_questions';
+    const LESSONS_STORAGE_KEY = 'cloudquiz_lessons';
+    const OLD_STORAGE_KEY = 'cloudquiz_questions';
 
-    function loadQuestions() {
+    function loadLessons() {
         try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            return raw ? JSON.parse(raw) : [];
-        } catch { return []; }
+            const raw = localStorage.getItem(LESSONS_STORAGE_KEY);
+            if (raw) {
+                return JSON.parse(raw);
+            }
+            
+            // Try migration
+            const oldRaw = localStorage.getItem(OLD_STORAGE_KEY);
+            if (oldRaw) {
+                const oldQuestions = JSON.parse(oldRaw);
+                if (Array.isArray(oldQuestions) && oldQuestions.length > 0) {
+                    const migrated = [{
+                        id: 'migrated_' + Date.now(),
+                        name: 'บทเรียนเดิม',
+                        questions: oldQuestions
+                    }];
+                    localStorage.setItem(LESSONS_STORAGE_KEY, JSON.stringify(migrated));
+                    return migrated;
+                }
+            }
+            
+            // Default first lesson
+            const defaultLessons = [{
+                id: 'default_' + Date.now(),
+                name: 'บทเรียนที่ 1',
+                questions: []
+            }];
+            localStorage.setItem(LESSONS_STORAGE_KEY, JSON.stringify(defaultLessons));
+            return defaultLessons;
+        } catch { 
+            return [{
+                id: 'default_error_' + Date.now(),
+                name: 'บทเรียนที่ 1',
+                questions: []
+            }]; 
+        }
     }
 
-    function saveQuestions(list) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    function saveLessons(list) {
+        localStorage.setItem(LESSONS_STORAGE_KEY, JSON.stringify(list));
     }
 
     // ===================== STATE =====================
-    let questions = loadQuestions();
+    let lessons = loadLessons();
+    let currentLessonIndex = 0;
+    let questions = lessons[currentLessonIndex] ? lessons[currentLessonIndex].questions : [];
+    
     let gameState = {
         currentIndex: 0,
         score: 0,
@@ -52,11 +88,22 @@
     const splashScreen = $('#splash-screen');
     const teacherScreen = $('#teacher-screen');
     const gameScreen = $('#game-screen');
+    const lessonSelectScreen = $('#lesson-select-screen');
 
     // Splash
     const btnTeacher = $('#btn-teacher-mode');
     const btnStudent = $('#btn-student-mode');
     const splashStats = $('#splash-stats');
+
+    // Lesson Select Screen
+    const lessonSelectBack = $('#lesson-select-back');
+    const lessonList = $('#lesson-list');
+
+    // Teacher Lesson Selector Bar
+    const lessonDropdown = $('#lesson-select-dropdown');
+    const btnNewLesson = $('#btn-new-lesson');
+    const btnRenameLesson = $('#btn-rename-lesson');
+    const btnDeleteLesson = $('#btn-delete-lesson');
 
     // Teacher
     const teacherBack = $('#teacher-back');
@@ -133,14 +180,18 @@
 
     // ===================== SCREEN NAV =====================
     function showScreen(screen) {
-        [splashScreen, teacherScreen, gameScreen].forEach(s => s.classList.remove('active'));
-        screen.classList.add('active');
+        [splashScreen, teacherScreen, gameScreen, lessonSelectScreen].forEach(s => {
+            if (s) s.classList.remove('active');
+        });
+        if (screen) screen.classList.add('active');
     }
 
     // ===================== SPLASH =====================
     function updateSplashStats() {
-        if (questions.length > 0) {
-            splashStats.innerHTML = `<span class="stat-badge">📋 มี ${questions.length} คำถามพร้อมเล่น</span>`;
+        const totalLessons = lessons.length;
+        const totalQuestions = lessons.reduce((sum, l) => sum + (l.questions ? l.questions.length : 0), 0);
+        if (totalQuestions > 0) {
+            splashStats.innerHTML = `<span class="stat-badge">📋 มี ${totalLessons} บทเรียน (${totalQuestions} ข้อ)</span>`;
         } else {
             splashStats.innerHTML = `<span class="stat-badge">📝 ยังไม่มีคำถาม — เพิ่มในโหมดครู</span>`;
         }
@@ -192,8 +243,67 @@
     }
 
     function initTeacher() {
+        renderLessonDropdown();
         renderQuestionList();
         resetForm();
+    }
+
+    function renderLessonDropdown() {
+        lessonDropdown.innerHTML = '';
+        lessons.forEach((l, idx) => {
+            const opt = document.createElement('option');
+            opt.value = idx;
+            opt.textContent = `${l.name} (${l.questions ? l.questions.length : 0} ข้อ)`;
+            if (idx === currentLessonIndex) {
+                opt.selected = true;
+            }
+            lessonDropdown.appendChild(opt);
+        });
+    }
+
+    function selectLesson(idx) {
+        currentLessonIndex = idx;
+        questions = lessons[currentLessonIndex] ? lessons[currentLessonIndex].questions : [];
+        renderQuestionList();
+        resetForm();
+        renderLessonDropdown();
+    }
+
+    function createNewLesson() {
+        const name = prompt('กรุณาใส่ชื่อบทเรียน/ชุดคำถามใหม่:');
+        if (!name || !name.trim()) return;
+        const newLesson = {
+            id: 'lesson_' + Date.now(),
+            name: name.trim(),
+            questions: []
+        };
+        lessons.push(newLesson);
+        saveLessons(lessons);
+        selectLesson(lessons.length - 1);
+    }
+
+    // Exported for the event listener rename trigger
+    function renameCurrentLesson() {
+        const current = lessons[currentLessonIndex];
+        if (!current) return;
+        const newName = prompt('แก้ไขชื่อบทเรียน/ชุดคำถาม:', current.name);
+        if (!newName || !newName.trim()) return;
+        current.name = newName.trim();
+        saveLessons(lessons);
+        renderLessonDropdown();
+    }
+
+    function deleteCurrentLesson() {
+        if (lessons.length <= 1) {
+            alert('ต้องมีอย่างน้อย 1 บทเรียนเสมอ ไม่สามารถลบได้');
+            return;
+        }
+        const current = lessons[currentLessonIndex];
+        if (!confirm(`คุณแน่ใจหรือไม่ที่จะลบชุดคำถาม "${current.name}"?`)) return;
+        lessons.splice(currentLessonIndex, 1);
+        saveLessons(lessons);
+        currentLessonIndex = Math.max(0, currentLessonIndex - 1);
+        selectLesson(currentLessonIndex);
     }
 
     function resetForm() {
@@ -259,7 +369,7 @@
             btn.addEventListener('click', (e) => {
                 const idx = parseInt(e.currentTarget.dataset.index);
                 questions.splice(idx, 1);
-                saveQuestions(questions);
+                saveLessons(lessons);
                 renderQuestionList();
             });
         });
@@ -304,7 +414,7 @@
             correctIndex: correctIdx,
             image: uploadedImageBase64
         });
-        saveQuestions(questions);
+        saveLessons(lessons);
         renderQuestionList();
         resetForm();
 
@@ -894,6 +1004,54 @@
         handTracker = null;
     }
 
+    // ===================== LESSON SELECTION =====================
+    function showLessonSelect() {
+        showScreen(lessonSelectScreen);
+        renderLessonList();
+    }
+
+    function renderLessonList() {
+        lessonList.innerHTML = '';
+        if (lessons.length === 0) {
+            lessonList.innerHTML = `
+                <div class="lesson-empty">
+                    <span class="lesson-empty-icon">📖</span>
+                    <p class="lesson-empty-text">ยังไม่มีบทเรียน</p>
+                    <p class="lesson-empty-hint">เข้าโหมดครูเพื่อเพิ่มบทเรียนก่อนนะ!</p>
+                </div>`;
+            return;
+        }
+
+        const emojis = ['📚', '🪐', '🧬', '🧪', '🧭', '📐', '🧠', '🎨', '🎬', '🧩'];
+        lessons.forEach((l, idx) => {
+            const count = l.questions ? l.questions.length : 0;
+            const emoji = emojis[idx % emojis.length];
+            const card = document.createElement('div');
+            card.className = 'lesson-card';
+            card.innerHTML = `
+                <div class="lesson-card-inner">
+                    <span class="lesson-card-emoji">${emoji}</span>
+                    <div class="lesson-card-info">
+                        <h3 class="lesson-card-name">${escHtml(l.name)}</h3>
+                        <span class="lesson-card-count">📝 ${count} ข้อ</span>
+                    </div>
+                    <span class="lesson-card-arrow">→</span>
+                </div>`;
+            
+            card.addEventListener('click', () => {
+                if (count === 0) {
+                    alert('บทเรียนนี้ยังไม่มีคำถาม กรุณาเพิ่มคำถามในโหมดครูก่อน');
+                    return;
+                }
+                currentLessonIndex = idx;
+                questions = l.questions;
+                startGame();
+            });
+
+            lessonList.appendChild(card);
+        });
+    }
+
     // ===================== EVENT LISTENERS =====================
     function init() {
         updateSplashStats();
@@ -904,7 +1062,24 @@
             initTeacher();
         });
 
-        btnStudent.addEventListener('click', () => startGame());
+        btnStudent.addEventListener('click', () => {
+            showLessonSelect();
+        });
+
+        // Lesson Select Screen
+        lessonSelectBack.addEventListener('click', () => {
+            showScreen(splashScreen);
+            updateSplashStats();
+        });
+
+        // Teacher Lesson Selector Bar
+        lessonDropdown.addEventListener('change', (e) => {
+            selectLesson(parseInt(e.target.value));
+        });
+
+        btnNewLesson.addEventListener('click', createNewLesson);
+        btnRenameLesson.addEventListener('click', renameCurrentLesson);
+        btnDeleteLesson.addEventListener('click', deleteCurrentLesson);
 
         // Teacher
         teacherBack.addEventListener('click', () => {
@@ -925,7 +1100,10 @@
             });
         });
 
-        questionForm.addEventListener('submit', handleFormSubmit);
+        questionForm.addEventListener('submit', (e) => {
+            handleFormSubmit(e);
+            renderLessonDropdown(); // Update the count in selector bar
+        });
 
         // Image Upload Helper
         async function handleImageFile(file) {
@@ -1010,18 +1188,18 @@
         });
 
         clearAllBtn.addEventListener('click', () => {
-            if (confirm('ลบคำถามทั้งหมด?')) {
-                questions = [];
-                saveQuestions(questions);
+            if (confirm('ลบคำถามทั้งหมดในบทเรียนนี้?')) {
+                questions.length = 0;
+                saveLessons(lessons);
                 renderQuestionList();
+                renderLessonDropdown();
             }
         });
 
         // Game
         gameBack.addEventListener('click', () => {
             cleanupGame();
-            showScreen(splashScreen);
-            updateSplashStats();
+            showLessonSelect();
         });
 
         // Mode toggle

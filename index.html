@@ -53,6 +53,24 @@
         </div>
     </div>
 
+    <!-- ===== LESSON SELECT SCREEN ===== -->
+    <div id="lesson-select-screen" class="screen lesson-select-screen">
+        <div class="splash-bg-effects">
+            <div class="splash-orb orb1"></div>
+            <div class="splash-orb orb2"></div>
+            <div class="splash-orb orb3"></div>
+        </div>
+        <header class="lesson-select-header">
+            <button id="lesson-select-back" class="icon-btn back-btn" aria-label="กลับ">←</button>
+            <h2 class="header-title">🎓 เลือกบทเรียน</h2>
+        </header>
+        <div class="lesson-select-body" id="lesson-select-body">
+            <div class="lesson-list" id="lesson-list">
+                <!-- Lesson cards rendered by JS -->
+            </div>
+        </div>
+    </div>
+
     <!-- ===== TEACHER SCREEN ===== -->
     <div id="teacher-screen" class="screen teacher-screen">
         <header class="teacher-header">
@@ -60,6 +78,16 @@
             <h2 class="header-title">👩‍🏫 สร้างคำถาม</h2>
             <div class="header-count" id="header-count">0 ข้อ</div>
         </header>
+
+        <!-- Lesson Selector Bar -->
+        <div class="lesson-selector-bar">
+            <select id="lesson-select-dropdown" class="lesson-dropdown">
+                <!-- Options rendered by JS -->
+            </select>
+            <button id="btn-new-lesson" class="btn-new-lesson" title="สร้างชุดใหม่">➕ ชุดใหม่</button>
+            <button id="btn-rename-lesson" class="btn-rename-lesson" title="เปลี่ยนชื่อ">✏️</button>
+            <button id="btn-delete-lesson" class="btn-delete-lesson" title="ลบชุดนี้">🗑️</button>
+        </div>
 
         <div class="teacher-body">
             <form id="question-form" class="question-form" autocomplete="off">

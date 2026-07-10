@@ -106,15 +106,6 @@
 
     // Mode toggle
     const modeToggle = $('#mode-toggle');
-    const cameraSwitchBtn = $('#camera-switch');
-    if (cameraSwitchBtn) {
-        cameraSwitchBtn.addEventListener('click', async () => {
-            currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-            cameraSwitchBtn.querySelector('#cam-icon').textContent = currentFacingMode === 'user' ? '🤳' : '🔄';
-            stopCamera();
-            await initCamera();
-        });
-    }
     const modeIcon = $('#mode-icon');
     const modeLabel = $('#mode-label');
 
@@ -252,8 +243,8 @@
                 </div>
                 <div class="q-card-choices">
                     ${q.choices.map((c, ci) =>
-                        `<span class="q-card-choice${ci === q.correctIndex ? ' correct' : ''}">${ci === q.correctIndex ? '✓ ' : ''}${escHtml(c)}</span>`
-                    ).join('')}
+                `<span class="q-card-choice${ci === q.correctIndex ? ' correct' : ''}">${ci === q.correctIndex ? '✓ ' : ''}${escHtml(c)}</span>`
+            ).join('')}
                 </div>`;
             questionList.appendChild(card);
         });
@@ -307,9 +298,9 @@
             }
         }
 
-        questions.push({ 
-            question: questionText, 
-            choices: allChoices, 
+        questions.push({
+            question: questionText,
+            choices: allChoices,
             correctIndex: correctIdx,
             image: uploadedImageBase64
         });
@@ -386,7 +377,7 @@
             if (timestamp - lastFrameTime >= FRAME_INTERVAL) {
                 lastFrameTime = timestamp;
                 if (handTracker && cameraFeed.readyState >= 2) {
-                    handTracker.send({ image: cameraFeed }).catch(() => {});
+                    handTracker.send({ image: cameraFeed }).catch(() => { });
                 }
             }
             processFrame();
@@ -592,12 +583,10 @@
         }
     }
 
-    let currentFacingMode = 'environment';
-
     async function initCamera() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+                video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
                 audio: false
             });
             cameraFeed.srcObject = stream;
@@ -689,8 +678,7 @@
                     <span class="cloud-sparkle">✦</span>
                     <div class="cloud-shape">
                         <div class="cloud-label">
-                            <span class="cloud-letter">${letters[i]}</span>
-                            ${escHtml(choice)}
+                            <p class=""cloud-letter"> ${letters[i]} . ${escHtml(choice)}</p>
                         </div>
                     </div>
                 </div>`;
@@ -713,25 +701,26 @@
     function calcPositions(count) {
         const W = window.innerWidth;
         const H = window.innerHeight;
-        const cloudW = Math.min(150, W * 0.38);
-        const cloudH = 80;
-        const padX = 12;
-        const topMin = 75;
-        const bottomMax = H - 210;
+        const cloudW = W * 0.44;
+        const cloudH = 140;
+        const padX = 6;
+        const topMin = 60;
+        const bottomMax = H - 200;
         const positions = [];
 
         if (count <= 2) {
-            const spacing = W / (count + 1);
-            for (let i = 0; i < count; i++) {
-                positions.push({
-                    x: spacing * (i + 1) - cloudW / 2,
-                    y: topMin + (bottomMax - topMin) * 0.3 + (i % 2 === 0 ? 0 : 50)
-                });
+            const centerY = topMin;
+            if (count === 1) {
+                positions.push({ x: W / 2 - cloudW / 2, y: centerY });
+            } else {
+                // Left and right side by side
+                positions.push({ x: padX, y: centerY });
+                positions.push({ x: W - cloudW - padX, y: centerY });
             }
         } else if (count === 3) {
-            positions.push({ x: W / 2 - cloudW / 2, y: topMin + 20 });
-            positions.push({ x: padX + 10, y: topMin + (bottomMax - topMin) * 0.5 });
-            positions.push({ x: W - cloudW - padX - 10, y: topMin + (bottomMax - topMin) * 0.5 + 30 });
+            positions.push({ x: W / 2 - cloudW / 2, y: topMin + 10 });
+            positions.push({ x: padX, y: topMin + (bottomMax - topMin) * 0.5 });
+            positions.push({ x: W - cloudW - padX, y: topMin + (bottomMax - topMin) * 0.5 + 30 });
         } else {
             const colW = (W - padX * 2) / 2;
             const rowH = (bottomMax - topMin) / 2;
@@ -739,8 +728,8 @@
                 const col = i % 2;
                 const row = Math.floor(i / 2);
                 positions.push({
-                    x: padX + col * colW + (colW - cloudW) / 2 + (row % 2 === 0 ? 5 : -5),
-                    y: topMin + row * rowH + 20 + (col % 2 === 0 ? 0 : 30)
+                    x: padX + col * colW + (colW - cloudW) / 2,
+                    y: topMin + row * rowH + 10 + (col % 2 === 0 ? 0 : 25)
                 });
             }
         }
@@ -944,7 +933,7 @@
                 uploadPrompt.classList.add('hidden');
                 uploadPreviewContainer.classList.remove('hidden');
                 uploadPreview.src = 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D\'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg\' viewBox%3D\'0 0 100 100\'%3E%3Ccircle cx%3D\'50\' cy%3D\'50\' r%3D\'40\' stroke%3D\'%237c3aed\' stroke-width%3D\'8\' fill%3D\'none\' stroke-dasharray%3D\'180\' stroke-dashoffset%3D\'0\'%3E%3CanimateTransform attributeName%3D\'transform\' type%3D\'rotate\' from%3D\'0 50 50\' to%3D\'360 50 50\' dur%3D\'1s\' repeatCount%3D\'indefinite\'%2F%3E%3C%2Fcircle%3E%3C%2Fsvg%3E';
-                
+
                 const compressedBase64 = await compressAndLoadImage(file);
                 uploadedImageBase64 = compressedBase64;
                 uploadPreview.src = compressedBase64;

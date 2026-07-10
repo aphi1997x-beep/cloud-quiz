@@ -63,6 +63,9 @@
     // Interaction mode: 'finger' or 'touch'
     let interactionMode = 'finger';
 
+    // Camera facing mode: 'environment' or 'user'
+    let currentFacingMode = 'environment';
+
     // Hand tracking state
     let handTracker = null;
     let handTrackingReady = false;
@@ -155,6 +158,11 @@
     const modeToggle = $('#mode-toggle');
     const modeIcon = $('#mode-icon');
     const modeLabel = $('#mode-label');
+
+    // Camera toggle
+    const cameraToggle = $('#camera-toggle');
+    const cameraIcon = $('#camera-icon');
+    const cameraLabel = $('#camera-label');
 
     // Hand loading
     const handLoading = $('#hand-loading');
@@ -554,9 +562,10 @@
             sy = ((ny - offset) / visibleFrac) * sh;
         }
 
-        // Mirror X because rear camera isn't mirrored but coordinates are
-        // Actually rear camera: MediaPipe returns x from left of image = left of real world
-        // No mirroring needed for rear camera
+        // Mirror X if using front (user-facing) camera because front feed is visually mirrored
+        if (currentFacingMode === 'user') {
+            sx = sw - sx;
+        }
 
         return { x: sx, y: sy };
     }
@@ -695,15 +704,29 @@
 
     async function initCamera() {
         try {
+            if (cameraFeed.srcObject) {
+                cameraFeed.srcObject.getTracks().forEach(t => t.stop());
+                cameraFeed.srcObject = null;
+            }
+
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+                video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
                 audio: false
             });
             cameraFeed.srcObject = stream;
             cameraFeed.style.display = '';
+
+            // Apply visual mirror if using front camera
+            if (currentFacingMode === 'user') {
+                cameraFeed.classList.add('mirrored');
+            } else {
+                cameraFeed.classList.remove('mirrored');
+            }
+
             await cameraFeed.play();
             cameraFallback.classList.add('hidden');
-        } catch {
+        } catch (err) {
+            console.error('initCamera error:', err);
             cameraFeed.style.display = 'none';
             cameraFallback.classList.remove('hidden');
             cameraFallback.innerHTML = '';
@@ -724,6 +747,23 @@
         if (cameraFeed.srcObject) {
             cameraFeed.srcObject.getTracks().forEach(t => t.stop());
             cameraFeed.srcObject = null;
+        }
+    }
+
+    async function toggleCamera() {
+        if (gameState.answered) return; // Prevent glitches during feedback
+        
+        currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
+        
+        if (cameraLabel) {
+            cameraLabel.textContent = currentFacingMode === 'environment' ? 'กล้องหลัง' : 'กล้องหน้า';
+        }
+        
+        await initCamera();
+        
+        if (interactionMode === 'finger' && handTrackingActive) {
+            stopFingerTracking();
+            startFingerTracking();
         }
     }
 
@@ -1002,6 +1042,9 @@
         resultOverlay.classList.add('hidden');
         handTrackingReady = false;
         handTracker = null;
+        currentFacingMode = 'environment';
+        if (cameraLabel) cameraLabel.textContent = 'สลับกล้อง';
+        cameraFeed.classList.remove('mirrored');
     }
 
     // ===================== LESSON SELECTION =====================
@@ -1213,6 +1256,9 @@
                 }
             }
         });
+
+        // Camera toggle
+        cameraToggle.addEventListener('click', toggleCamera);
 
         // Feedback
         feedbackNext.addEventListener('click', () => {

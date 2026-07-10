@@ -851,6 +851,10 @@ body {
     z-index: 0;
 }
 
+#camera-feed.mirrored {
+    transform: scaleX(-1);
+}
+
 .camera-fallback {
     position: absolute;
     inset: 0;
@@ -1024,6 +1028,33 @@ body {
 }
 
 .mode-toggle:active {
+    background: var(--glass-hover);
+}
+
+/* ===== CAMERA TOGGLE ===== */
+.camera-toggle {
+    position: absolute;
+    top: 56px;
+    right: 105px;
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 14px;
+    font-family: var(--font-th);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background 0.2s;
+}
+
+.camera-toggle:active {
     background: var(--glass-hover);
 }
 

@@ -12,7 +12,7 @@
             if (raw) {
                 return JSON.parse(raw);
             }
-            
+
             // Try migration
             const oldRaw = localStorage.getItem(OLD_STORAGE_KEY);
             if (oldRaw) {
@@ -27,7 +27,7 @@
                     return migrated;
                 }
             }
-            
+
             // Default first lesson
             const defaultLessons = [{
                 id: 'default_' + Date.now(),
@@ -36,12 +36,12 @@
             }];
             localStorage.setItem(LESSONS_STORAGE_KEY, JSON.stringify(defaultLessons));
             return defaultLessons;
-        } catch { 
+        } catch {
             return [{
                 id: 'default_error_' + Date.now(),
                 name: 'บทเรียนที่ 1',
                 questions: []
-            }]; 
+            }];
         }
     }
 
@@ -53,7 +53,7 @@
     let lessons = loadLessons();
     let currentLessonIndex = 0;
     let questions = lessons[currentLessonIndex] ? lessons[currentLessonIndex].questions : [];
-    
+
     let gameState = {
         currentIndex: 0,
         score: 0,
@@ -82,6 +82,9 @@
 
     // Trail
     let trailCounter = 0;
+
+    // Feedback countdown timer
+    let feedbackTimer = null;
 
     // ===================== DOM =====================
     const $ = (s) => document.querySelector(s);
@@ -752,15 +755,15 @@
 
     async function toggleCamera() {
         if (gameState.answered) return; // Prevent glitches during feedback
-        
+
         currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
-        
+
         if (cameraLabel) {
             cameraLabel.textContent = currentFacingMode === 'environment' ? 'กล้องหลัง' : 'กล้องหน้า';
         }
-        
+
         await initCamera();
-        
+
         if (interactionMode === 'finger' && handTrackingActive) {
             stopFingerTracking();
             startFingerTracking();
@@ -937,6 +940,29 @@
         setTimeout(() => showFeedback(isCorrect, correctIndex), 700);
     }
 
+    function startFeedbackCountdown(isLast) {
+        if (feedbackTimer) {
+            clearInterval(feedbackTimer);
+        }
+
+        let secondsLeft = 5;
+        const baseText = isLast ? '🏆 ดูผลคะแนน' : 'ข้อถัดไป';
+        const arrow = isLast ? '' : ' →';
+
+        feedbackNext.textContent = `${baseText} (${secondsLeft})${arrow}`;
+
+        feedbackTimer = setInterval(() => {
+            secondsLeft--;
+            if (secondsLeft <= 0) {
+                clearInterval(feedbackTimer);
+                feedbackTimer = null;
+                feedbackNext.click();
+            } else {
+                feedbackNext.textContent = `${baseText} (${secondsLeft})${arrow}`;
+            }
+        }, 1000);
+    }
+
     function showFeedback(isCorrect, correctIndex) {
         const q = questions[gameState.currentIndex];
 
@@ -953,9 +979,16 @@
 
         feedbackOverlay.classList.remove('hidden');
         if (isCorrect) spawnConfetti(15);
+
+        // Start 5-second countdown to next question
+        startFeedbackCountdown(isLast);
     }
 
     function hideFeedback() {
+        if (feedbackTimer) {
+            clearInterval(feedbackTimer);
+            feedbackTimer = null;
+        }
         feedbackOverlay.classList.add('hidden');
     }
 
@@ -1038,7 +1071,7 @@
     function cleanupGame() {
         stopFingerTracking();
         stopCamera();
-        feedbackOverlay.classList.add('hidden');
+        hideFeedback();
         resultOverlay.classList.add('hidden');
         handTrackingReady = false;
         handTracker = null;
@@ -1080,7 +1113,7 @@
                     </div>
                     <span class="lesson-card-arrow">→</span>
                 </div>`;
-            
+
             card.addEventListener('click', () => {
                 if (count === 0) {
                     alert('บทเรียนนี้ยังไม่มีคำถาม กรุณาเพิ่มคำถามในโหมดครูก่อน');

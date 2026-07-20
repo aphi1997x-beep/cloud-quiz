@@ -471,10 +471,10 @@ body {
 }
 
 /* ===== TEACHER SCREEN ===== */
-    font-size: 32px;
-    flex-shrink: 0;
-    position: relative;
-    z-index: 1;
+font-size: 32px;
+flex-shrink: 0;
+position: relative;
+z-index: 1;
 }
 
 .btn-text-group {
@@ -1382,7 +1382,7 @@ body {
 }
 
 .question-text-display {
-    font-size: 72px;
+    font-size: 64;
     font-weight: 700;
     line-height: 1.35;
     margin-bottom: 10px;
@@ -2018,7 +2018,7 @@ body {
     }
 
     .cloud-label {
-        font-size: 72px;
+        font-size: 64px;
         max-width: 42vw;
     }
 
